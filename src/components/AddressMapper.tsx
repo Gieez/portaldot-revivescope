@@ -155,7 +155,7 @@ export const AddressMapper: React.FC<AddressMapperProps> = ({
                 rel="noreferrer"
                 className="text-accent-blue underline inline-flex items-center gap-0.5"
               >
-                node-console.feso-apps.xyz <ExternalLink className="w-2.5 h-2.5" />
+                node-console.portaldot.dev <ExternalLink className="w-2.5 h-2.5" />
               </a>
             </li>
             <li>Navigate to <strong>{guide.module}</strong></li>

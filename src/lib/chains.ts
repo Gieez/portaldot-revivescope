@@ -10,17 +10,17 @@ export const portaldotV3 = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ['https://testnetv3-eth-rpc.feso-apps.xyz'],
-      webSocket: ['wss://testnetv3-node.feso-apps.xyz'],
+      http: ['https://test-evm-rpc-v3.portaldot.dev'],
+      webSocket: ['wss://test-node-v3.portaldot.dev'],
     },
     public: {
-      http: ['https://testnetv3-eth-rpc.feso-apps.xyz'],
+      http: ['https://test-evm-rpc-v3.portaldot.dev'],
     },
   },
   blockExplorers: {
     default: {
       name: 'Portaldot Node Console',
-      url: 'https://node-console.feso-apps.xyz/',
+      url: 'https://node-console.portaldot.dev/',
     },
   },
   testnet: true,
@@ -28,14 +28,14 @@ export const portaldotV3 = defineChain({
 
 export const PORTALDOT_CHAIN_SPECS = {
   chainId: 420420777,
-  hexChainId: '0x190f2309',
+  hexChainId: '0x190f1ca9',
   networkName: 'PortaldotV3 Testnet',
   tokenSymbol: 'tPOTv3',
   mainnetSymbol: 'POT',
   decimals: 14,
   baseUnitMultiplier: 100_000_000_000_000n, // 10^14
-  evmRpcUrl: 'https://testnetv3-eth-rpc.feso-apps.xyz',
-  substrateRpcUrl: 'wss://testnetv3-node.feso-apps.xyz',
-  nodeConsoleUrl: 'https://node-console.feso-apps.xyz/',
+  evmRpcUrl: 'https://test-evm-rpc-v3.portaldot.dev',
+  substrateRpcUrl: 'wss://test-node-v3.portaldot.dev',
+  nodeConsoleUrl: 'https://node-console.portaldot.dev/',
   runtimeEngine: 'Substrate pallet-revive (PolkaVM/EVM) + pallet-contracts (WASM)',
 };

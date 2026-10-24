@@ -24,7 +24,7 @@ export interface NodeTelemetry {
   syncStatus: 'SYNCED' | 'SYNCING' | 'OFFLINE_MAINTENANCE' | 'SIMULATED_REPLICA';
 }
 
-const OFFICIAL_EVM_RPC = 'https://testnetv3-eth-rpc.feso-apps.xyz';
+const OFFICIAL_EVM_RPC = 'https://test-evm-rpc-v3.portaldot.dev';
 const EXPECTED_CHAIN_ID = 420420777;
 
 // Simulated in-memory chain state for hackathon evaluation resilience

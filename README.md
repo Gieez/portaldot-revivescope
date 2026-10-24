@@ -28,7 +28,7 @@ ReviveScope delivers a tactical, zero-lag diagnostic workspace:
 
 - **Dual-Address Resolver:** Bidirectional mapping between EVM H160 accounts (MetaMask) and Substrate SS58 `AccountId32`. Pre-configured with official testnet genesis mappings and runtime query recipes.
 - **14-Decimal Anti-Skew Math Engine:** Type-safe native BigInt conversion between human POT, 14-decimal base units ($10^{14}$), 6-decimal pUSD, and standard 18-decimal tokens. Generates drop-in TypeScript and Solidity snippets.
-- **Node & RPC Latency Sentinel:** Active polling of `https://testnetv3-eth-rpc.feso-apps.xyz` and WebSocket endpoints, tracking latency, block progression, and upstream maintenance states.
+- **Node & RPC Latency Sentinel:** Active polling of `https://test-evm-rpc-v3.portaldot.dev` and WebSocket endpoints, tracking latency, block progression, and upstream maintenance states.
 - **ReviveProbe On-Chain Diagnostic Sandbox (`ReviveProbe.sol`):** Solidity smart contract deployed to verify state inclusion, event emission, and 14-decimal deposit accounting without blind gas spend.
 - **Hybrid Live / Replica Architecture:** Functions seamlessly against live Portaldot RPC while providing an offline simulated harness during scheduled network upgrades.
 

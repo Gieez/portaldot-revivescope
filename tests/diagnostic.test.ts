@@ -25,11 +25,25 @@ test('Address Mapper: H160 validation and SS58 derivation', () => {
   assert.equal(isValidH160(validDeployer), true);
   assert.equal(isValidH160('0xinvalid'), false);
 
-  const officialSs58 = deriveSubstrateAddress(validDeployer);
+  // 1. Official deployer
   assert.equal(
-    officialSs58,
+    deriveSubstrateAddress(validDeployer),
     '5Hfmuhj1AHrTBJiC9zUPnJo1cfG2G52LLMwofSigBnjtto8Y',
-    'Must match official guide testnet SS58 mapping'
+    'Must match official pallet-revive derived SS58 mapping'
+  );
+
+  // 2. Probe contract
+  assert.equal(
+    deriveSubstrateAddress('0x7a39F90aE852D6cfEb24a9a46C0A9A30f78d6b9C'),
+    '5EpxvMDeCPJrSqZTnjSE3Ktme7w4bPAmyQf7c6AxMmDkZEn7',
+    'Must match pallet-revive calculated SS58 address'
+  );
+
+  // 3. Precompile
+  assert.equal(
+    deriveSubstrateAddress('0x0000000000000000000000000000000000000001'),
+    '5C4hrfjw9DjXZTzV3MwzrrAr9P1MMqQDFcr5ZiJ7JxD76SLX',
+    'Must match pallet-revive calculated SS58 address'
   );
 });
 

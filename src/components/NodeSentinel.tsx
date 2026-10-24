@@ -59,10 +59,10 @@ export const NodeSentinel: React.FC<NodeSentinelProps> = ({
               UPSTREAM RPC MAINTENANCE / MIGRATION ACTIVE
             </span>
             <span className="text-zinc-400 leading-relaxed">
-              Official testnet RPC (`testnetv3-eth-rpc.feso-apps.xyz`) is currently undergoing network
-              runtime upgrade per the organizers announcement. Use the built-in{' '}
+              Target testnet RPC (`test-evm-rpc-v3.portaldot.dev`) is actively monitored. If upstream
+              connectivity is interrupted, use the built-in{' '}
               <strong className="text-zinc-200">SIM HARNESS</strong> mode in the top right to verify
-              and exercise all diagnostic contracts with active mock state.
+              and exercise all diagnostic contracts with mock state.
             </span>
           </div>
         </div>

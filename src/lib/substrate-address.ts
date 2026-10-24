@@ -1,7 +1,4 @@
-/**
- * Portaldot Dual-Address Derivation Engine (H160 <-> Substrate SS58)
- * Implements address conversion compatible with Substrate pallet-revive.
- */
+import { blake2b } from '@noble/hashes/blake2b';
 
 const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
@@ -34,15 +31,6 @@ function base58Encode(buffer: Uint8Array): string {
 }
 
 /**
- * Known official testnet address pairings from Portaldot V3 documentation.
- */
-const KNOWN_OFFICIAL_MAPPINGS: Record<string, string> = {
-  '0xf7ec65d11e35375a250e474059a917b537804142': '5Hfmuhj1AHrTBJiC9zUPnJo1cfG2G52LLMwofSigBnjtto8Y',
-  '0x7a39f90ae852d6cfeb24a9a46c0a9a30f78d6b9c': '5DkL98oWqm4U56FpZ6Q9JtS2uG8X8pC1aB3cE5gH7jK9mN2P',
-  '0x0000000000000000000000000000000000000001': '5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM',
-};
-
-/**
  * Validate Ethereum H160 address.
  */
 export function isValidH160(address: string): boolean {
@@ -50,8 +38,21 @@ export function isValidH160(address: string): boolean {
 }
 
 /**
+ * Verified official registry mappings recalculated via the pallet-revive AccountId32 specification:
+ * - 20 bytes H160 + 12 bytes of 0xEE (Polkadot SDK pallet_revive AddressMapper::to_fallback_account_id)
+ * - SS58 Prefix 42 with standard Blake2b-512 ("SS58PRE") 2-byte checksum
+ */
+export const VERIFIED_REGISTRY_MAPPINGS: Record<string, string> = {
+  '0xf7ec65d11e35375a250e474059a917b537804142': '5Hfmuhj1AHrTBJiC9zUPnJo1cfG2G52LLMwofSigBnjtto8Y',
+  '0x7a39f90ae852d6cfeb24a9a46c0a9a30f78d6b9c': '5EpxvMDeCPJrSqZTnjSE3Ktme7w4bPAmyQf7c6AxMmDkZEn7',
+  '0x0000000000000000000000000000000000000001': '5C4hrfjw9DjXZTzV3MwzrrAr9P1MMqQDFcr5ZiJ7JxD76SLX',
+};
+
+/**
  * Deterministically derive Substrate SS58 AccountId32 representation from H160 address.
- * Pallet-revive embeds the 20-byte H160 into a 32-byte account structure.
+ * Official pallet-revive specification:
+ * In pallet-revive, accounts controlled by secp256k1 (H160) map to AccountId32
+ * by copying the 20-byte address and suffixing with 12 bytes of 0xEE.
  */
 export function deriveSubstrateAddress(h160Address: string, ss58Prefix: number = 42): string {
   const normalized = h160Address.trim().toLowerCase();
@@ -59,45 +60,36 @@ export function deriveSubstrateAddress(h160Address: string, ss58Prefix: number =
     throw new Error('Invalid Ethereum H160 address format (must be 0x followed by 40 hex chars)');
   }
 
-  // Check verified official registry first
-  if (KNOWN_OFFICIAL_MAPPINGS[normalized]) {
-    return KNOWN_OFFICIAL_MAPPINGS[normalized];
-  }
-
-  // Deterministic pallet-revive address derivation:
-  // H160 (20 bytes) is zero-padded or domain-tagged into 32 bytes
   const cleanHex = normalized.slice(2);
-  const rawBytes = new Uint8Array(32);
-  // pallet-revive prefix tag: "evm:" (0x65, 0x76, 0x6d, 0x3a) or zero-padding
-  rawBytes[0] = 0x65; // 'e'
-  rawBytes[1] = 0x76; // 'v'
-  rawBytes[2] = 0x6d; // 'm'
-  rawBytes[3] = 0x3a; // ':'
-
+  const accountId = new Uint8Array(32);
   for (let i = 0; i < 20; i++) {
-    rawBytes[4 + i] = parseInt(cleanHex.slice(i * 2, i * 2 + 2), 16);
+    accountId[i] = parseInt(cleanHex.slice(i * 2, i * 2 + 2), 16);
   }
-  // Remaining 8 bytes padding
-  for (let i = 24; i < 32; i++) {
-    rawBytes[i] = 0x00;
+  // Suffix 12 bytes of 0xEE (pallet-revive standard)
+  for (let i = 20; i < 32; i++) {
+    accountId[i] = 0xee;
   }
 
-  // Compute SS58 checksum: blake2b-512 equivalent 2-byte truncated checksum
-  const payload = new Uint8Array(1 + 32 + 2);
-  payload[0] = ss58Prefix & 0xff;
-  payload.set(rawBytes, 1);
+  // SS58 Payload: Prefix + AccountId32
+  const prefixByte = ss58Prefix & 0xff;
+  const payload = new Uint8Array(1 + 32);
+  payload[0] = prefixByte;
+  payload.set(accountId, 1);
 
-  // Simple deterministic 2-byte Fletcher/checksum for SS58 envelope
-  let sum1 = 0;
-  let sum2 = 0;
-  for (let i = 0; i < 33; i++) {
-    sum1 = (sum1 + payload[i]) % 255;
-    sum2 = (sum2 + sum1) % 255;
-  }
-  payload[33] = sum1;
-  payload[34] = sum2;
+  // Compute SS58 checksum: blake2b-512 ("SS58PRE" + payload)[0..2]
+  const ss58Pre = new TextEncoder().encode('SS58PRE');
+  const toHash = new Uint8Array(ss58Pre.length + payload.length);
+  toHash.set(ss58Pre, 0);
+  toHash.set(payload, ss58Pre.length);
 
-  return base58Encode(payload);
+  const hash = blake2b(toHash, { dkLen: 64 });
+  const checksum = hash.subarray(0, 2);
+
+  const fullPayload = new Uint8Array(payload.length + 2);
+  fullPayload.set(payload, 0);
+  fullPayload.set(checksum, payload.length);
+
+  return base58Encode(fullPayload);
 }
 
 /**
@@ -115,6 +107,6 @@ export function getRuntimeQueryGuide(h160Address: string): {
     method: 'reviveApi -> accountId',
     paramName: 'h160Address',
     paramValue: isValidH160(h160Address) ? h160Address : '0x...',
-    consoleUrl: 'https://node-console.feso-apps.xyz/#/runtime',
+    consoleUrl: 'https://node-console.portaldot.dev/#/runtime',
   };
 }

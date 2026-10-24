@@ -30,7 +30,7 @@ export const TelemetryFeed: React.FC<TelemetryFeedProps> = ({ logs, onClearLogs 
         name: 'PortaldotV3 Testnet',
         tokenSymbol: 'tPOTv3',
         decimals: 14,
-        evmRpc: 'https://testnetv3-eth-rpc.feso-apps.xyz',
+        evmRpc: 'https://test-evm-rpc-v3.portaldot.dev',
       },
       logCount: filteredLogs.length,
       events: filteredLogs,
