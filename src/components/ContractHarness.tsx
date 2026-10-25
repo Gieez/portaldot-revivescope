@@ -121,7 +121,12 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
       {/* Target Contract Configuration */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
         <div className="md:col-span-2">
-          <label className="text-zinc-400 mb-1 block">Contract Address (ReviveProbe)</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-zinc-400 block">Target Contract Address</label>
+            <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+              Planned / Pre-Compiled Sandbox
+            </span>
+          </div>
           <input
             type="text"
             value={contractAddress}

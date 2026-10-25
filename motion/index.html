@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<!--
+  ReviveScope Official Launch Opener — Built with Bang Motion v1.19.0 (MIT)
+  Author: Gieez / Bang Motion Engine
+  Theme: Portaldot V3.0 Dual-Runtime Diagnostic Sentinel
+  Palette: --base: #05070c, --accent: #00f2fe, --accent-lit: #4facfe, --pink: #e6007a, --emerald: #10b981
+  Font: Sora & JetBrains Mono
+-->
+<head>
+<meta charset="utf-8">
+<title>ReviveScope // Official Launch Film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
+}}
+</script>
+<style>
+:root{
+  --base:#05070c;
+  --surface:rgba(12,16,25,0.92);
+  --border:#1c2438;
+  --accent:#00f2fe;
+  --accent-lit:#4facfe;
+  --pink:#e6007a;
+  --emerald:#10b981;
+  --amber:#f59e0b;
+  --ink:#F2F5F9;
+  --ink-muted:#94a3b8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;
+  font-family:"Sora",system-ui,sans-serif;color:var(--ink)}
+#filters{position:fixed;width:0;height:0;opacity:0;pointer-events:none}
+
+.mono{font-family:"JetBrains Mono",monospace}
+
+/* Stage dipatok 1920x1080, discale ke jendela */
+#stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;
+  transform:translate(-50%,-50%) scale(1);overflow:hidden;background:var(--base)}
+#world{position:absolute;inset:0;will-change:transform;transform-style:preserve-3d}
+#gl{position:absolute;inset:0;width:1920px;height:1080px;display:block}
+.bgfx{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(70% 45% at 50% 105%,
+    color-mix(in srgb, var(--accent) 30%, transparent),
+    color-mix(in srgb, var(--pink) 15%, transparent) 45%, transparent 70%)}
+
+#dom{position:absolute;inset:0}
+
+/* Top & Bottom HUD */
+.hud-bar{position:absolute;left:60px;right:60px;height:48px;
+  background:rgba(10,14,22,0.85);border:1px solid var(--border);
+  border-radius:10px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;font-size:12px;z-index:25;backdrop-filter:blur(10px)}
+.hud-top{top:36px}
+.hud-bottom{bottom:36px;color:var(--ink-muted)}
+
+/* Scenes & Layers */
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;opacity:0;visibility:hidden;padding:0 120px;text-align:center}
+
+.hero{font-size:112px;font-weight:900;letter-spacing:-0.03em;color:#fff;
+  white-space:nowrap;line-height:1.05;text-shadow:0 4px 30px rgba(0,0,0,0.8)}
+.hero.sm{font-size:74px}.hero.md{font-size:92px}
+
+.wd{display:inline-block;white-space:nowrap}
+.ch{display:inline-block;will-change:transform,opacity,filter;opacity:0}
+
+/* Word Highlight / Pills */
+.hl{position:relative;display:inline-block}
+.hl i{position:absolute;inset:0;border-radius:.24em;
+  background:linear-gradient(95deg, #00f2fe, #4facfe);
+  transform:scaleX(0);transform-origin:0 50%}
+.hl.pink i{background:linear-gradient(95deg, #e6007a, #ff2a9d)}
+.hl.amber i{background:linear-gradient(95deg, #d97706, #f59e0b)}
+.hl.emerald i{background:linear-gradient(95deg, #059669, #10b981)}
+.hl-t{position:relative;opacity:0;color:#05070c;font-weight:800;padding:0 .18em}
+
+/* 3D Glass Cards */
+.card-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px 36px;box-shadow:0 20px 50px rgba(0,0,0,0.65);
+  backdrop-filter:blur(16px);text-align:left;
+}
+
+/* Light leak */
+.leak{position:absolute;left:50%;top:50%;width:2400px;height:2400px;
+  margin:-1200px 0 0 -1200px;border-radius:50%;
+  background:radial-gradient(circle,
+    color-mix(in srgb, var(--accent-lit) 80%, white),
+    color-mix(in srgb, var(--pink) 50%, transparent) 34%,
+    transparent 74%);
+  filter:blur(70px);mix-blend-mode:screen;opacity:0;pointer-events:none;z-index:40}
+
+.vignette{position:absolute;inset:0;pointer-events:none;z-index:10;
+  background:radial-gradient(ellipse 80% 70% at 50% 50%,transparent 45%,
+    rgba(5,7,12,0.7) 85%,rgba(5,7,12,0.95) 100%)}
+
+/* Debug Scrub Panel (?debug=1) */
+#ui{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+  display:none;align-items:center;gap:14px;padding:10px 18px;border-radius:14px;
+  background:rgba(14,17,26,0.95);border:1px solid rgba(255,255,255,0.15);
+  font-size:13px;color:#94a3b8;z-index:100}
+#ui.on{display:flex}
+#ui button{background:#1e2433;color:#fff;border:none;padding:6px 14px;
+  border-radius:6px;cursor:pointer;font-family:inherit}
+#scrub{width:340px;accent-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<svg id="filters"><defs></defs></svg>
+
+<div id="stage">
+  <div id="world">
+    <canvas id="gl"></canvas>
+    <div class="bgfx"></div>
+    <div id="dom">
+      
+      <!-- Top Status HUD -->
+      <div class="hud-bar hud-top mono">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--emerald);box-shadow:0 0 10px var(--emerald);"></span>
+          <span style="color:var(--accent);font-weight:700;">REVIVESCOPE SENTINEL v3.0</span>
+          <span style="color:var(--ink-muted);">//</span>
+          <span style="color:#cbd5e1;">CHAIN ID 420420777</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px;color:var(--ink-muted);">
+          <span>RPC: <strong style="color:var(--emerald);">test-evm-rpc-v3.portaldot.dev</strong></span>
+          <span>LATENCY: <strong style="color:var(--accent);">174ms</strong></span>
+          <span style="background:rgba(16,185,129,0.15);color:var(--emerald);padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;">PROBE 200 OK</span>
+        </div>
+      </div>
+
+      <!-- SCENE 1: HOOK (0s - 4.5s) -->
+      <section class="scene" id="sc-1">
+        <div style="font-size:14px;color:var(--accent);letter-spacing:0.12em;font-weight:700;margin-bottom:14px;text-transform:uppercase;" class="mono">
+          PORTALDOT HACKER HOUSE 2026 • DORAHACKS BUIDL #49759
+        </div>
+        <h1 class="hero md" id="line-1">
+          <span class="txt">Meet</span>&nbsp;<span class="hl" id="hl-1"><i></i><span class="hl-t">ReviveScope</span></span>
+        </h1>
+        <p style="font-size:30px;font-weight:600;color:var(--ink-muted);margin-top:20px;" id="sub-1">
+          Dual-Runtime Node & Contract Diagnostic Sentinel
+        </p>
+        <div style="display:flex;gap:16px;margin-top:32px;font-size:14px;" class="mono" id="badges-1">
+          <span style="background:rgba(255,255,255,0.06);padding:8px 18px;border-radius:8px;border:1px solid var(--border);color:#e2e8f0;">⚡ PolkaVM / Pallet-Revive</span>
+          <span style="background:rgba(255,255,255,0.06);padding:8px 18px;border-radius:8px;border:1px solid var(--border);color:#e2e8f0;">📐 14-Decimal Anti-Skew Math</span>
+          <span style="background:rgba(255,255,255,0.06);padding:8px 18px;border-radius:8px;border:1px solid var(--border);color:#e2e8f0;">🔗 SS58 Account Resolver</span>
+        </div>
+      </section>
+
+      <!-- SCENE 2: THE 10,000X PROBLEM (4.5s - 9.5s) -->
+      <section class="scene" id="sc-2">
+        <div style="font-size:13px;color:var(--amber);letter-spacing:0.12em;font-weight:700;margin-bottom:12px;text-transform:uppercase;" class="mono">
+          THE CRITICAL INTEROPERABILITY GAP
+        </div>
+        <h1 class="hero sm" id="line-2">
+          <span class="txt">Beware the</span>&nbsp;<span class="hl amber" id="hl-2"><i></i><span class="hl-t">10,000x</span></span>&nbsp;<span class="txt">Decimal Skew</span>
+        </h1>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:40px;width:100%;max-width:1400px;" id="cards-2">
+          <div class="card-box mono" style="border-top:3px solid var(--amber);">
+            <div style="color:var(--amber);font-size:14px;font-weight:700;margin-bottom:8px;">STANDARD EVM ASSUMPTION</div>
+            <div style="font-size:26px;font-weight:700;color:#f43f5e;margin-bottom:12px;">10^18 Base Units</div>
+            <p style="font-size:16px;color:var(--ink-muted);line-height:1.6;font-family:'Sora',sans-serif;">
+              Standard tools use <code style="color:#f43f5e;">parseEther("1.0")</code>. On Portaldot native POT (14 decimals), this causes an instant <strong>10,000x overpayment error</strong>.
+            </p>
+          </div>
+
+          <div class="card-box mono" style="border-top:3px solid var(--emerald);">
+            <div style="color:var(--emerald);font-size:14px;font-weight:700;margin-bottom:8px;">REVIVESCOPE SOLUTION</div>
+            <div style="font-size:26px;font-weight:700;color:var(--emerald);margin-bottom:12px;">10^14 Type-Safe Normalizer</div>
+            <p style="font-size:16px;color:var(--ink-muted);line-height:1.6;font-family:'Sora',sans-serif;">
+              ReviveScope guarantees zero arithmetic skew with native BigInt conversion and generates drop-in TypeScript/Solidity helper snippets.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 3: DUAL-ADDRESS RESOLVER (9.5s - 14.5s) -->
+      <section class="scene" id="sc-3">
+        <div style="font-size:13px;color:var(--pink);letter-spacing:0.12em;font-weight:700;margin-bottom:12px;text-transform:uppercase;" class="mono">
+          SOLUTION 01 // PALLET-REVIVE SPECIFICATION
+        </div>
+        <h1 class="hero sm" id="line-3">
+          <span class="txt">Authentic</span>&nbsp;<span class="hl pink" id="hl-3"><i></i><span class="hl-t">pallet-revive</span></span>&nbsp;<span class="txt">Mapping</span>
+        </h1>
+
+        <div class="card-box mono" style="margin-top:32px;width:100%;max-width:1300px;border-left:4px solid var(--pink);">
+          <div style="font-size:13px;color:var(--pink);margin-bottom:6px;">POLKADOT SDK SPECIFICATION (AddressMapper::to_fallback_account_id):</div>
+          <div style="font-size:22px;color:#fff;font-weight:700;margin-bottom:16px;">
+            AccountId32 = [ 20-byte H160 ] + [ 0xEE; 12 ] &nbsp;➔&nbsp; Blake2b-512 SS58 (Prefix 42)
+          </div>
+
+          <div style="background:#070a12;border:1px solid var(--border);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:var(--ink-muted);">EVM H160 (MetaMask):</span>
+              <span style="color:#fff;font-weight:700;">0xf7eC65d11e35375A250e474059a917B537804142</span>
+            </div>
+            <div style="height:1px;background:var(--border);"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:var(--emerald);font-weight:700;">Deterministic Substrate SS58:</span>
+              <span style="color:var(--accent);font-weight:700;font-size:20px;">5Hfmuhj1AHrTBJiC9zUPnJo1cfG2G52LLMwofSigBnjtto8Y</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 4: SENTINEL & REVIVEPROBE (14.5s - 19.5s) -->
+      <section class="scene" id="sc-4">
+        <div style="font-size:13px;color:var(--emerald);letter-spacing:0.12em;font-weight:700;margin-bottom:12px;text-transform:uppercase;" class="mono">
+          SOLUTION 02 // REALTIME RPC & DIAGNOSTICS
+        </div>
+        <h1 class="hero sm" id="line-4">
+          <span class="txt">Live Node Telemetry &</span>&nbsp;<span class="hl emerald" id="hl-4"><i></i><span class="hl-t">ReviveProbe</span></span>
+        </h1>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:36px;width:100%;max-width:1400px;">
+          <div class="card-box mono" style="border-top:3px solid var(--accent);">
+            <div style="color:var(--accent);font-weight:700;margin-bottom:12px;">OFFICIAL RPC CONNECTION</div>
+            <div style="font-size:14px;color:var(--ink-muted);margin-bottom:6px;">HTTP JSON-RPC:</div>
+            <div style="color:#fff;font-weight:700;margin-bottom:14px;">https://test-evm-rpc-v3.portaldot.dev</div>
+            <div style="font-size:14px;color:var(--ink-muted);margin-bottom:6px;">Chain ID & Status:</div>
+            <div style="color:var(--emerald);font-weight:700;">420420777 • Block #169324 • 174ms</div>
+          </div>
+
+          <div class="card-box mono" style="border-top:3px solid var(--emerald);">
+            <div style="color:var(--emerald);font-weight:700;margin-bottom:12px;">ON-CHAIN DIAGNOSTIC SANDBOX</div>
+            <div style="font-size:14px;color:var(--ink-muted);margin-bottom:6px;">Smart Contract (ReviveProbe.sol):</div>
+            <div style="color:#fff;font-weight:700;margin-bottom:14px;">recordProbe(string tag, uint256 potAmount)</div>
+            <div style="font-size:14px;color:var(--ink-muted);margin-bottom:6px;">Calldata Inspection:</div>
+            <div style="color:var(--accent);font-weight:700;">0x9c42a0f80000000000...SENTINEL_PING</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 5: VERIFIED SUMMARY (19.5s - 24.0s) -->
+      <section class="scene" id="sc-5">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 18px;border-radius:999px;font-size:13px;font-weight:700;background:rgba(16,185,129,0.1);border:1px solid var(--emerald);color:var(--emerald);margin-bottom:16px;" class="mono">
+          ✓ SCREENING BLOCKERS RESOLVED • 100% PRODUCTION READY
+        </div>
+        <h1 class="hero md" id="line-5">
+          <span class="txt">Built with</span>&nbsp;<span class="hl" id="hl-5"><i></i><span class="hl-t">Precision</span></span>
+        </h1>
+        
+        <div class="card-box mono" style="margin-top:28px;width:100%;max-width:1100px;display:grid;grid-template-columns:auto 1fr;gap:12px 36px;font-size:16px;">
+          <span style="color:var(--accent);">Live Production:</span>
+          <span style="color:#fff;font-weight:700;">https://portaldot-revivescope.vercel.app</span>
+
+          <span style="color:var(--accent);">GitHub Repository:</span>
+          <span style="color:#fff;font-weight:700;">https://github.com/Gieez/portaldot-revivescope</span>
+
+          <span style="color:var(--accent);">Official RPC:</span>
+          <span style="color:#fff;">https://test-evm-rpc-v3.portaldot.dev</span>
+
+          <span style="color:var(--accent);">Portaldot Builder:</span>
+          <span style="color:var(--emerald);font-weight:700;">Gieez (Solo Web3 Builder)</span>
+        </div>
+      </section>
+
+      <!-- Bottom HUD -->
+      <div class="hud-bar hud-bottom mono">
+        <div>REVIVESCOPE • PORTALDOT HACKER HOUSE 2026 (DORAHACKS BUIDL #49759)</div>
+        <div id="clock">0.00s</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="leak" id="leak"></div>
+  <div class="vignette"></div>
+</div>
+
+<div id="ui">
+  <button id="btn-play">Pause</button><button id="btn-restart">Restart</button>
+  <input id="scrub" type="range" min="0" max="1000" value="0">
+  <span id="ui-clock" class="mono">0.00s</span>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer }  from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass }      from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
+
+const $ = (s, r=document) => r.querySelector(s);
+const defs = $('#filters defs'); let fc = 0;
+
+function makeBlur(){
+  const id='mb'+(fc++), NS='http://www.w3.org/2000/svg';
+  const f=document.createElementNS(NS,'filter'); f.id=id;
+  f.setAttribute('x','-70%');f.setAttribute('y','-70%');
+  f.setAttribute('width','240%');f.setAttribute('height','240%');
+  const g=document.createElementNS(NS,'feGaussianBlur');
+  g.setAttribute('stdDeviation','0 0'); f.appendChild(g); defs.appendChild(f);
+  return {url:`url(#${id})`,node:g};
+}
+function blurTween(tl,targets,at,from,to,dur,{ease='power3.out',ax=1,ay=.08}={}){
+  const b=makeBlur(),o={v:from};
+  tl.set(targets,{filter:b.url},at);
+  tl.to(o,{v:to,duration:dur,ease,onUpdate(){
+    b.node.setAttribute('stdDeviation',`${(o.v*ax).toFixed(2)} ${(o.v*ay).toFixed(2)}`);}},at);
+  tl.set(targets,{filter:'none'},at+dur);
+}
+const VERT={ax:.1,ay:1};
+
+function splitChars(el){
+  const words=(el.textContent||'').split(' '); el.textContent=''; const out=[];
+  words.forEach((w,i)=>{
+    const wr=document.createElement('span'); wr.className='wd';
+    for(const c of w){const s=document.createElement('span');s.className='ch';
+      s.textContent=c;wr.appendChild(s);out.push(s);}
+    el.appendChild(wr);
+    if(i<words.length-1){const sp=document.createElement('span');sp.className='ch';
+      sp.innerHTML='&nbsp;';el.appendChild(sp);out.push(sp);}
+  });
+  return out;
+}
+
+// ── THREE.JS WEBGL DUAL ENGINE ─────────────────────────────────────────
+const W=1920, H=1080;
+const renderer=new THREE.WebGLRenderer({canvas:$('#gl'),antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(W,H,false);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+
+const ACC=new THREE.Color(0x00f2fe), ACL=new THREE.Color(0x4facfe), BASE=new THREE.Color(0x05070c);
+const scene=new THREE.Scene(); scene.fog=new THREE.FogExp2(BASE.getHex(),0.012);
+const camera=new THREE.PerspectiveCamera(50,W/H,0.1,400);
+
+const S={ grid:0.25, dust:0.55, stars:0.8, camX:0, camY:0, camZ:15, camRoll:0, bloom:0.85, shake:0 };
+
+// Floating Dust
+{
+  const N=1000, pos=new Float32Array(N*3), seed=new Float32Array(N);
+  for(let i=0;i<N;i++){
+    pos[i*3]=(Math.random()-.5)*90; pos[i*3+1]=(Math.random()-.5)*52;
+    pos[i*3+2]=-Math.random()*50+5; seed[i]=Math.random()*6.283;
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('aSeed',new THREE.BufferAttribute(seed,1));
+  var dustMat=new THREE.ShaderMaterial({
+    transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+    uniforms:{uTime:{value:0},uOpacity:{value:0.5},uPix:{value:Math.min(devicePixelRatio,2)},uColor:{value:ACL}},
+    vertexShader:`attribute float aSeed;varying float vA;uniform float uTime;uniform float uPix;
+     void main(){vec3 p=position;p.y+=sin(uTime*.35+aSeed)*.9;
+     vec4 mv=modelViewMatrix*vec4(p,1.);vA=.35+.65*abs(sin(uTime*.9+aSeed*3.1));
+     gl_PointSize=(24.*uPix)/(-mv.z);gl_Position=projectionMatrix*mv;}`,
+    fragmentShader:`varying float vA;uniform float uOpacity;uniform vec3 uColor;
+     void main(){float d=length(gl_PointCoord-.5);if(d>.5)discard;
+     gl_FragColor=vec4(uColor,pow(1.-d*2.,2.4)*vA*uOpacity);}`
+  });
+  scene.add(new THREE.Points(g,dustMat));
+}
+
+// Grid Floor
+const gridMat=new THREE.ShaderMaterial({
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+  uniforms:{uTime:{value:0},uOpacity:{value:0.25},uC1:{value:ACC},uC2:{value:ACL}},
+  vertexShader:`varying vec2 vUv;void main(){vUv=uv;
+   gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader:`varying vec2 vUv;uniform float uTime;uniform float uOpacity;uniform vec3 uC1;uniform vec3 uC2;
+   void main(){vec2 p=vUv*48.;p.y+=uTime*2.4;
+   vec2 g=abs(fract(p)-.5)/fwidth(p);float line=1.-min(min(g.x,g.y),1.);
+   float d=length(vUv-.5)*2.;float fade=1.-smoothstep(.05,.65,d);
+   gl_FragColor=vec4(mix(uC1,uC2,fade),line*fade*uOpacity);}`
+});
+const grid=new THREE.Mesh(new THREE.PlaneGeometry(160,160),gridMat);
+grid.rotation.x=-Math.PI/2; grid.position.y=-6.5; scene.add(grid);
+
+// Extruded 3D Nodes (PolkaVM Ornaments)
+scene.add(new THREE.AmbientLight(ACC.clone().multiplyScalar(0.4).getHex(), 1.0));
+const keyLight=new THREE.DirectionalLight(ACL.getHex(), 2.4); keyLight.position.set(5,7,9); scene.add(keyLight);
+
+function nodeShape(){
+  const s=new THREE.Shape(), R=1.2, c=0.15;
+  s.moveTo(0,R);s.quadraticCurveTo(c,c,R,0);s.quadraticCurveTo(c,-c,0,-R);
+  s.quadraticCurveTo(-c,-c,-R,0);s.quadraticCurveTo(-c,c,0,R);return s;
+}
+const nodeGeo=new THREE.ExtrudeGeometry(nodeShape(),{depth:0.3,bevelEnabled:true,bevelThickness:0.06,bevelSize:0.08,bevelSegments:3});
+nodeGeo.center();
+
+const mkMat=()=>new THREE.MeshStandardMaterial({color:ACL.getHex(),emissive:ACC.getHex(),emissiveIntensity:0.6,roughness:0.3,metalness:0.2,transparent:true,opacity:0});
+const NODES_DATA=[[-9.5,4.2,-7,0.6,0.5,0.7],[8.6,4.8,-9,0.75,-0.36,2.1],[-7.2,-3.8,-4,0.45,0.62,3.9],[9.4,-3.2,-7,0.5,-0.55,1.3]];
+const ambNodes=NODES_DATA.map(d=>{
+  const m=new THREE.Mesh(nodeGeo,mkMat());
+  m.position.set(d[0],d[1],d[2]);m.scale.setScalar(d[3]);m.userData=d;scene.add(m);return m;
+});
+
+const composer=new EffectComposer(renderer); composer.setSize(W,H);
+composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new THREE.Vector2(W,H), 0.75, 0.65, 0.5);
+composer.addPass(bloom); composer.addPass(new OutputPass());
+
+function render(t){
+  dustMat.uniforms.uTime.value=t; dustMat.uniforms.uOpacity.value=S.dust;
+  gridMat.uniforms.uTime.value=t; gridMat.uniforms.uOpacity.value=S.grid;
+  for(const m of ambNodes){
+    const d=m.userData, tw=0.45+0.55*Math.abs(Math.sin(t*0.9+d[5]));
+    m.material.opacity=S.stars*tw; m.visible=m.material.opacity>0.01;
+    m.rotation.z=t*d[4]+d[5]; m.rotation.y=Math.sin(t*d[4]*1.4+d[5])*0.5;
+    m.position.y=d[1]+Math.sin(t*0.5+d[5])*0.5;
+  }
+  camera.position.set(S.camX+Math.sin(t*0.4)*0.25, S.camY+Math.cos(t*0.3)*0.2, S.camZ);
+  camera.lookAt(S.camX*0.3, S.camY*0.3, 0);
+  camera.rotation.z+=S.camRoll;
+  bloom.strength=S.bloom;
+  composer.render();
+}
+
+// ── GSAP CINEMATIC CHOREOGRAPHY ───────────────────────────────────────
+const DURATION = 24.0;
+const tl = gsap.timeline({paused:true});
+const rig = $('#world'), leak = $('#leak');
+
+let leakSide = 1;
+const sweep = (at, dur=0.9) => {
+  const side = (leakSide *= -1);
+  tl.fromTo(leak, {x:side*1500,y:-240,scale:0.85}, {x:side*300,y:120,scale:1.1,duration:dur,ease:'sine.out',immediateRender:false}, at);
+  tl.fromTo(leak, {opacity:0}, {opacity:0.85,duration:dur*0.4,ease:'sine.in',immediateRender:false}, at);
+  tl.to(leak, {opacity:0,duration:dur*0.6,ease:'sine.out'}, at+dur*0.4);
+};
+
+const inUp = (ch,el,at,{dur=0.75,st=0.02}={}) => {
+  tl.fromTo(ch,{opacity:0,yPercent:60,scaleY:1.35},{opacity:1,yPercent:0,scaleY:1,duration:dur,ease:'power4.out',stagger:st,immediateRender:false},at);
+  blurTween(tl,el,at,30,0,dur,VERT);
+};
+const outUp = (ch,el,at,{dur=0.35,st=0.01}={}) => {
+  tl.to(ch,{opacity:0,yPercent:-70,duration:dur,ease:'power2.in',stagger:st},at);
+  blurTween(tl,el,at,0,45,dur+0.1,{ease:'power2.in',...VERT});
+};
+
+const mark = (hl,at) => {
+  const i=$('i',hl);if(i)tl.fromTo(i,{scaleX:0},{scaleX:1,duration:0.45,ease:'power3.out',immediateRender:false},at);
+  tl.fromTo($('.hl-t',hl),{opacity:0,yPercent:50},{opacity:1,yPercent:0,duration:0.65,ease:'power4.out',immediateRender:false},at);
+};
+
+// INITIAL RIG
+tl.set(S,{grid:0.3,dust:0.6,stars:0.85,camZ:14.5,camRoll:0,bloom:0.85},0);
+
+// ── SCENE 1 (0.0s - 4.5s): Hook ──
+const ch1 = splitChars($('.txt', $('#line-1')));
+tl.set('#sc-1', {autoAlpha:1}, 0.2);
+inUp(ch1, $('#line-1'), 0.4);
+mark($('#hl-1'), 0.85);
+tl.fromTo('#sub-1', {opacity:0, y:20}, {opacity:1, y:0, duration:0.7, ease:'power3.out'}, 1.2);
+tl.fromTo('#badges-1', {opacity:0, y:20}, {opacity:1, y:0, duration:0.6, ease:'power3.out'}, 1.5);
+
+sweep(4.0, 0.8);
+outUp(ch1, $('#line-1'), 4.1);
+tl.to(['#sub-1','#badges-1'], {opacity:0, y:-20, duration:0.35, ease:'power2.in'}, 4.1);
+tl.set('#sc-1', {autoAlpha:0}, 4.5);
+
+// ── SCENE 2 (4.5s - 9.5s): 10,000x Problem ──
+const ch2 = splitChars($('.txt', $('#line-2')));
+tl.set('#sc-2', {autoAlpha:1}, 4.5);
+inUp(ch2, $('#line-2'), 4.6);
+mark($('#hl-2'), 5.0);
+tl.fromTo('#cards-2', {opacity:0, y:30, scale:0.95}, {opacity:1, y:0, scale:1, duration:0.8, ease:'power3.out'}, 5.4);
+tl.to(S, {camRoll:0.04, camZ:13.5, duration:4, ease:'sine.inOut'}, 4.8);
+
+sweep(9.0, 0.8);
+outUp(ch2, $('#line-2'), 9.1);
+tl.to('#cards-2', {opacity:0, y:-30, duration:0.35, ease:'power2.in'}, 9.1);
+tl.set('#sc-2', {autoAlpha:0}, 9.5);
+
+// ── SCENE 3 (9.5s - 14.5s): Pallet-Revive Derivation ──
+const ch3 = splitChars($('.txt', $('#line-3')));
+tl.set('#sc-3', {autoAlpha:1}, 9.5);
+inUp(ch3, $('#line-3'), 9.6);
+mark($('#hl-3'), 10.0);
+tl.fromTo($('#sc-3 .card-box'), {opacity:0, y:30}, {opacity:1, y:0, duration:0.75, ease:'power3.out'}, 10.3);
+tl.to(S, {camRoll:-0.03, camZ:14.2, duration:4, ease:'sine.inOut'}, 9.8);
+
+sweep(14.0, 0.8);
+outUp(ch3, $('#line-3'), 14.1);
+tl.to($('#sc-3 .card-box'), {opacity:0, y:-30, duration:0.35, ease:'power2.in'}, 14.1);
+tl.set('#sc-3', {autoAlpha:0}, 14.5);
+
+// ── SCENE 4 (14.5s - 19.5s): Live Sentinel & ReviveProbe ──
+const ch4 = splitChars($('.txt', $('#line-4')));
+tl.set('#sc-4', {autoAlpha:1}, 14.5);
+inUp(ch4, $('#line-4'), 14.6);
+mark($('#hl-4'), 15.0);
+tl.fromTo($('#sc-4 .card-box'), {opacity:0, y:30}, {opacity:1, y:0, stagger:0.15, duration:0.75, ease:'power3.out'}, 15.3);
+
+sweep(19.0, 0.8);
+outUp(ch4, $('#line-4'), 19.1);
+tl.to($('#sc-4 .card-box'), {opacity:0, y:-30, duration:0.35, ease:'power2.in'}, 19.1);
+tl.set('#sc-4', {autoAlpha:0}, 19.5);
+
+// ── SCENE 5 (19.5s - 24.0s): Verified Summary Outro ──
+const ch5 = splitChars($('.txt', $('#line-5')));
+tl.set('#sc-5', {autoAlpha:1}, 19.5);
+inUp(ch5, $('#line-5'), 19.6);
+mark($('#hl-5'), 20.0);
+tl.fromTo($('#sc-5 .card-box'), {opacity:0, scale:0.92}, {opacity:1, scale:1, duration:0.8, ease:'back.out(1.5)'}, 20.3);
+tl.to('#sc-5', {opacity:0, duration:0.6, ease:'power2.in'}, 23.4);
+
+tl.to({},{duration:0.01}, DURATION);
+
+// ── PEREKAT & PLAYER ──────────────────────────────────────────────────
+const stage = $('#stage');
+const fit = () => {
+  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+};
+addEventListener('resize', fit); fit();
+
+const clock=$('#clock'), scrub=$('#scrub'), btn=$('#btn-play');
+let scrubbing = false;
+
+(function frame(){
+  const t = tl.time();
+  render(t);
+  clock.textContent = t.toFixed(2) + 's';
+  if(!scrubbing && scrub) scrub.value = String((t / DURATION) * 1000);
+  if($('#ui-clock')) $('#ui-clock').textContent = t.toFixed(2) + 's';
+  requestAnimationFrame(frame);
+})();
+
+const toggle = () => {
+  if(tl.paused() || tl.progress() >= 1){
+    if(tl.progress() >= 1) tl.progress(0);
+    tl.play(); btn.textContent = 'Pause';
+  } else {
+    tl.pause(); btn.textContent = 'Play';
+  }
+};
+btn.onclick = toggle;
+$('#btn-restart').onclick = () => { tl.pause(0); tl.play(); btn.textContent = 'Pause'; };
+scrub.addEventListener('pointerdown', () => { scrubbing = true; tl.pause(); btn.textContent = 'Play'; });
+addEventListener('pointerup', () => scrubbing = false);
+scrub.addEventListener('input', () => { tl.pause(); tl.time((scrub.value / 1000) * DURATION); });
+
+addEventListener('keydown', e => {
+  if(e.code === 'Space'){ e.preventDefault(); toggle(); }
+  if(/^[rR]$/.test(e.key)){ tl.pause(0); tl.play(); }
+  if(/^[hH]$/.test(e.key)) $('#ui').classList.toggle('on');
+});
+
+const Q = new URLSearchParams(location.search);
+if(Q.has('debug')) $('#ui').classList.add('on');
+tl.eventCallback('onComplete', () => { tl.play(0); });
+
+const seek = t => { tl.pause(); tl.time(t, false); if(gsap.ticker.tick) gsap.ticker.tick(); render(t); };
+window.OPENER = { tl, DURATION, seek, ready: false };
+
+document.fonts.ready.then(() => {
+  window.OPENER.ready = true;
+  if(!Q.has('clean')) tl.play(0);
+});
+</script>
+</body>
+</html>

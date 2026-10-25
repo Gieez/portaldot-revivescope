@@ -86,7 +86,7 @@ export const AddressMapper: React.FC<AddressMapperProps> = ({
           onClick={() => setPreset('0x7a39F90aE852D6cfEb24a9a46C0A9A30f78d6b9C')}
           className="px-2 py-0.5 bg-canvas hover:bg-zinc-800 border border-panel-border rounded text-zinc-300 transition-colors"
         >
-          ReviveProbe (0x7a39...)
+          Planned Probe (0x7a39...)
         </button>
         {connectedWalletAddress && (
           <button
