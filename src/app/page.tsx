@@ -104,6 +104,53 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [runProbe]);
 
+  // Auto-reconnect wallet if already authorized (persists across page reloads)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.ethereum) return;
+
+    const provider = window.ethereum;
+
+    const checkConnected = async () => {
+      try {
+        const accounts = (await provider.request({
+          method: 'eth_accounts',
+        })) as string[];
+        if (accounts && accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+          addLog('RESOLVER', `Restored active wallet session: ${accounts[0]}`);
+        }
+      } catch (err) {
+        console.error('Silent reconnect check failed:', err);
+      }
+    };
+
+    checkConnected();
+
+    const handleAccountsChanged = (...args: unknown[]) => {
+      const accs = args[0] as string[];
+      if (accs && accs.length > 0) {
+        setWalletAddress(accs[0]);
+        addLog('RESOLVER', `Switched active wallet account: ${accs[0]}`);
+      } else {
+        setWalletAddress(null);
+        setWalletBalance(null);
+        addLog('RESOLVER', 'Wallet disconnected by user');
+      }
+    };
+
+    const handleChainChanged = () => {
+      window.location.reload();
+    };
+
+    provider.on?.('accountsChanged', handleAccountsChanged);
+    provider.on?.('chainChanged', handleChainChanged);
+
+    return () => {
+      provider.removeListener?.('accountsChanged', handleAccountsChanged);
+      provider.removeListener?.('chainChanged', handleChainChanged);
+    };
+  }, [addLog]);
+
   // Connect Wallet Handler
   const handleConnectWallet = async () => {
     if (typeof window === 'undefined' || !window.ethereum) {
