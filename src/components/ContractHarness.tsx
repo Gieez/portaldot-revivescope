@@ -93,6 +93,7 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
     if (typeof window !== 'undefined') {
       const savedContract = localStorage.getItem('revivescope_deployed_contract');
       const savedTx = localStorage.getItem('revivescope_deployment_tx');
+      const savedProbes = localStorage.getItem('revivescope_probes_list');
       if (savedContract) {
         setContractAddress(savedContract);
         setDeployedOnChain(true);
@@ -100,8 +101,34 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
       if (savedTx) {
         setDeploymentTxHash(savedTx);
       }
+      if (savedProbes) {
+        try {
+          const parsed = JSON.parse(savedProbes).map((p: Record<string, unknown>) => ({
+            ...p,
+            value: BigInt(p.value as string),
+            blockNumber: BigInt(p.blockNumber as string),
+          }));
+          setProbesList(parsed);
+        } catch (e) {
+          console.error('Failed to parse saved probes:', e);
+        }
+      }
     }
   }, []);
+
+  const saveProbesToStorage = (list: RecordedProbeItem[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const serialized = list.map((p) => ({
+        ...p,
+        value: p.value.toString(),
+        blockNumber: p.blockNumber.toString(),
+      }));
+      localStorage.setItem('revivescope_probes_list', JSON.stringify(serialized.slice(0, 30)));
+    } catch (e) {
+      console.error('Failed to save probes to localStorage:', e);
+    }
+  };
 
   const [probesList, setProbesList] = useState<RecordedProbeItem[]>([
     {
@@ -254,7 +281,11 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
           isOnChain: true,
         };
 
-        setProbesList((prev) => [newRecord, ...prev]);
+        setProbesList((prev) => {
+          const updated = [newRecord, ...prev];
+          saveProbesToStorage(updated);
+          return updated;
+        });
         onLogEvent(
           'CONTRACT',
           `Probe #${newId} CONFIRMED on-chain! Block: #${receipt.blockNumber}, Tx: ${hash}`
@@ -293,7 +324,11 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
         isOnChain: false,
       };
 
-      setProbesList((prev) => [newRecord, ...prev]);
+      setProbesList((prev) => {
+        const updated = [newRecord, ...prev];
+        saveProbesToStorage(updated);
+        return updated;
+      });
       setIsExecuting(false);
       onLogEvent(
         'CONTRACT',

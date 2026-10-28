@@ -19,20 +19,35 @@ export default function Home() {
   const [probeResult, setProbeResult] = useState<RpcProbeResult | null>(null);
   const [isProbing, setIsProbing] = useState<boolean>(false);
 
-  const [logs, setLogs] = useState<LogEntry[]>([
-    {
-      id: 'log-0',
-      timestamp: new Date().toISOString().slice(11, 19),
-      type: 'RPC',
-      message: 'Initialized ReviveScope diagnostic runtime targeting Chain ID 420420777',
-    },
-    {
-      id: 'log-1',
-      timestamp: new Date().toISOString().slice(11, 19),
-      type: 'MATH',
-      message: '14-Decimal BigInt Guard active: 1 tPOTv3 = 10^14 base units (Anti-skew active)',
-    },
-  ]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('revivescope_telemetry_logs');
+      if (saved) {
+        try {
+          setLogs(JSON.parse(saved));
+          return;
+        } catch (e) {
+          console.error('Failed to load saved logs:', e);
+        }
+      }
+      setLogs([
+        {
+          id: 'log-0',
+          timestamp: new Date().toISOString().slice(11, 19),
+          type: 'RPC',
+          message: 'Initialized ReviveScope diagnostic runtime targeting Chain ID 420420777',
+        },
+        {
+          id: 'log-1',
+          timestamp: new Date().toISOString().slice(11, 19),
+          type: 'MATH',
+          message: '14-Decimal BigInt Guard active: 1 tPOTv3 = 10^14 base units (Anti-skew active)',
+        },
+      ]);
+    }
+  }, []);
 
   const addLog = useCallback(
     (type: LogEntry['type'], message: string) => {
@@ -42,10 +57,27 @@ export default function Home() {
         type,
         message,
       };
-      setLogs((prev) => [newEntry, ...prev.slice(0, 99)]);
+      setLogs((prev) => {
+        const updated = [newEntry, ...prev.slice(0, 99)];
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('revivescope_telemetry_logs', JSON.stringify(updated.slice(0, 50)));
+          } catch (e) {
+            console.error('Failed to persist logs:', e);
+          }
+        }
+        return updated;
+      });
     },
     []
   );
+
+  const handleClearLogs = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('revivescope_telemetry_logs');
+    }
+    setLogs([]);
+  }, []);
 
   const fetchBalance = useCallback(async () => {
     if (!walletAddress) {
@@ -316,7 +348,7 @@ export default function Home() {
           />
 
           {/* Live Telemetry Log Feed */}
-          <TelemetryFeed logs={logs} onClearLogs={() => setLogs([])} />
+          <TelemetryFeed logs={logs} onClearLogs={handleClearLogs} />
         </main>
 
         {/* Footer */}
