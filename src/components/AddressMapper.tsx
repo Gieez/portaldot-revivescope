@@ -87,16 +87,16 @@ export const AddressMapper: React.FC<AddressMapperProps> = ({
       <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
         <span className="text-zinc-400 font-medium">Quick Presets:</span>
         <button
+          onClick={() => setPreset('0xe0ba8adf0cd660f5875aca70a98e466f30855dec')}
+          className="px-2.5 py-1 bg-accent-emerald/10 hover:bg-accent-emerald/20 border border-accent-emerald/30 rounded-lg text-accent-emerald transition-colors font-bold"
+        >
+          Live ReviveProbe (0xe0ba...)
+        </button>
+        <button
           onClick={() => setPreset('0xf7eC65d11e35375A250e474059a917B537804142')}
           className="px-2.5 py-1 bg-canvas hover:bg-zinc-800 border border-panel-border rounded-lg text-zinc-300 transition-colors"
         >
           Genesis Deployer
-        </button>
-        <button
-          onClick={() => setPreset('0x7a39F90aE852D6cfEb24a9a46C0A9A30f78d6b9C')}
-          className="px-2.5 py-1 bg-canvas hover:bg-zinc-800 border border-panel-border rounded-lg text-zinc-300 transition-colors"
-        >
-          ReviveProbe Contract
         </button>
         {connectedWalletAddress && (
           <button

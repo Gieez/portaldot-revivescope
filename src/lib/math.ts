@@ -19,6 +19,11 @@ export function parsePot(humanAmount: string): bigint {
   const clean = humanAmount.trim();
   if (!clean || clean === '0' || clean === '.') return 0n;
 
+  // Reject negative or invalid non-numeric strings
+  if (!/^\d+(\.\d+)?$/.test(clean) && !/^\.\d+$/.test(clean)) {
+    throw new Error('Invalid numeric input: only positive decimal numbers allowed');
+  }
+
   const parts = clean.split('.');
   if (parts.length > 2) throw new Error('Invalid numeric input: multiple decimal points');
 

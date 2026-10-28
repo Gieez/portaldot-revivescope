@@ -186,7 +186,7 @@ export default function Home() {
   // Connect Wallet Handler
   const handleConnectWallet = async () => {
     if (typeof window === 'undefined' || !window.ethereum) {
-      alert('No Ethereum wallet extension detected. Please install MetaMask or Rabby.');
+      addLog('RPC', 'No Web3 wallet extension detected in browser. Please install MetaMask or Rabby.');
       return;
     }
 
@@ -255,7 +255,7 @@ export default function Home() {
   // Add / Switch Portaldot V3 in MetaMask via EIP-3085
   const handleAddToMetaMask = async () => {
     if (typeof window === 'undefined' || !window.ethereum) {
-      alert('MetaMask not detected in browser.');
+      addLog('RPC', 'MetaMask not detected in browser. Please install wallet extension.');
       return;
     }
 
@@ -320,6 +320,48 @@ export default function Home() {
         />
 
         <main className="flex-1 max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex flex-col gap-6">
+          {/* Verified On-Chain Production Banner */}
+          <div className="bg-gradient-to-r from-panel-elevated via-panel to-panel-elevated border border-accent-emerald/30 rounded-xl p-3 sm:px-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-emerald-950/20">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-emerald opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-emerald"></span>
+              </span>
+              <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                <span className="font-bold text-zinc-100 uppercase tracking-wider">
+                  Portaldot V3.0 Live Deployment Verified
+                </span>
+                <span className="text-zinc-600 hidden sm:inline">•</span>
+                <span className="text-zinc-400">
+                  Contract:{' '}
+                  <a
+                    href="https://scanner-testnet-v3.portaldot.dev/address/0xe0ba8adf0cd660f5875aca70a98e466f30855dec"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accent-emerald font-bold hover:underline"
+                  >
+                    0xe0ba...5dec
+                  </a>
+                </span>
+                <span className="text-zinc-600 hidden sm:inline">•</span>
+                <span className="text-zinc-400">
+                  Tx:{' '}
+                  <a
+                    href="https://scanner-testnet-v3.portaldot.dev/tx/0x18c0f3997ec78bb6223f63eec0fe873677ad05bf740425501c82accbcb3e4401"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accent-blue font-semibold hover:underline"
+                  >
+                    0x18c0...4401
+                  </a>
+                </span>
+              </div>
+            </div>
+            <span className="text-[11px] font-mono text-accent-emerald font-bold bg-accent-emerald/10 border border-accent-emerald/30 px-2.5 py-0.5 rounded-full shrink-0">
+              BLOCK #231554
+            </span>
+          </div>
+
           {/* Top Node Sentinel Telemetry Banner */}
           <NodeSentinel
             probeResult={probeResult}

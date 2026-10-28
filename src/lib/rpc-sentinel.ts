@@ -55,12 +55,10 @@ export async function probeRpcEndpoint(rpcUrl: string = OFFICIAL_EVM_RPC): Promi
     const res = await fetch(rpcUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method: 'eth_chainId',
-        params: [],
-        id: 1,
-      }),
+      body: JSON.stringify([
+        { jsonrpc: '2.0', method: 'eth_chainId', params: [], id: 1 },
+        { jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 2 },
+      ]),
       signal: controller.signal,
     });
 
@@ -75,20 +73,30 @@ export async function probeRpcEndpoint(rpcUrl: string = OFFICIAL_EVM_RPC): Promi
         blockNumber: 0n,
         chainId: 0,
         timestamp,
-        statusText: `HTTP ${res.status} ${res.statusText} (Upstream Upgrade in Progress)`,
-        errorDetail: 'Official RPC returned non-200. Testnet V3 node upgrade ongoing per Titus Oct 9 notice.',
+        statusText: `HTTP ${res.status} ${res.statusText}`,
+        errorDetail: 'Official RPC returned non-200. Check network connectivity.',
         isSimulated: false,
       };
     }
 
     const data = await res.json();
-    const chainId = parseInt(data.result, 16);
+    let chainId = 0;
+    let blockNumber = 0n;
+
+    if (Array.isArray(data)) {
+      const chainIdItem = data.find((item) => item.id === 1);
+      const blockItem = data.find((item) => item.id === 2);
+      if (chainIdItem?.result) chainId = parseInt(chainIdItem.result, 16);
+      if (blockItem?.result) blockNumber = BigInt(blockItem.result);
+    } else if (data?.result) {
+      chainId = parseInt(data.result, 16);
+    }
 
     return {
       endpoint: rpcUrl,
       isReachable: true,
       latencyMs: latency,
-      blockNumber: 0n,
+      blockNumber,
       chainId,
       timestamp,
       statusText: chainId === EXPECTED_CHAIN_ID ? 'CONNECTED_HEALTHY' : 'CHAIN_ID_MISMATCH',
