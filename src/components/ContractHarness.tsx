@@ -40,6 +40,39 @@ interface ContractHarnessProps {
   onRefreshBalance?: () => void;
 }
 
+// Ensure wallet is on PortaldotV3 Testnet
+const ensurePortaldotChain = async () => {
+  if (typeof window === 'undefined' || !window.ethereum) return;
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: PORTALDOT_CHAIN_SPECS.hexChainId }],
+    });
+  } catch (switchError: unknown) {
+    const err = switchError as { code?: number };
+    if (err && err.code === 4902) {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [
+          {
+            chainId: PORTALDOT_CHAIN_SPECS.hexChainId,
+            chainName: PORTALDOT_CHAIN_SPECS.networkName,
+            nativeCurrency: {
+              name: 'Portaldot Token',
+              symbol: 'tPOT',
+              decimals: 18,
+            },
+            rpcUrls: [PORTALDOT_CHAIN_SPECS.evmRpcUrl],
+            blockExplorerUrls: ['https://scanner-testnet-v3.portaldot.dev/'],
+          },
+        ],
+      });
+    } else {
+      throw switchError;
+    }
+  }
+};
+
 export const ContractHarness: React.FC<ContractHarnessProps> = ({
   walletAddress,
   isSimulated,
@@ -113,6 +146,11 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
 
     try {
       setIsDeploying(true);
+      onLogEvent('CONTRACT', 'Ensuring wallet is connected to Portaldot V3 Testnet (Chain ID 420420777)...');
+
+      // Auto-switch chain to Portaldot V3
+      await ensurePortaldotChain();
+
       onLogEvent('CONTRACT', 'Initiating on-chain deployment of ReviveProbe.sol to Portaldot V3...');
 
       const walletClient = createWalletClient({
@@ -157,7 +195,7 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       onLogEvent('CONTRACT', `Contract deployment error: ${msg}`);
-      alert(`Deployment failed: ${msg}`);
+      alert(`Deployment notice: ${msg}`);
     } finally {
       setIsDeploying(false);
     }
@@ -170,6 +208,8 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
     // If LIVE mode + wallet connected + contract deployed -> Execute REAL ON-CHAIN TRANSACTION!
     if (!isSimulated && walletAddress && typeof window !== 'undefined' && window.ethereum) {
       try {
+        await ensurePortaldotChain();
+
         onLogEvent(
           'CONTRACT',
           `Broadcasting live transaction: ReviveProbe.recordProbe("${activeTag}", ${testDepositPot} tPOT)...`
@@ -302,7 +342,7 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono text-accent-emerald bg-accent-emerald/10 border border-accent-emerald/30 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+              <span className="text-[11px] font-mono text-accent-emerald bg-accent-emerald/10 border border-accent-emerald/30 px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-bold">
                 <CheckCircle className="w-3.5 h-3.5" /> Deployed on Testnet
               </span>
               {deploymentTxHash && (
@@ -426,7 +466,7 @@ export const ContractHarness: React.FC<ContractHarnessProps> = ({
           <span className="font-semibold text-zinc-300">
             Recorded Execution Probes ({probesList.length})
           </span>
-          <span className="text-[11px] text-accent-emerald flex items-center gap-1 bg-accent-emerald/10 border border-accent-emerald/20 px-2 py-0.5 rounded-full">
+          <span className="text-[11px] text-accent-emerald flex items-center gap-1 bg-accent-emerald/10 border border-accent-emerald/20 px-2 py-0.5 rounded-full font-bold">
             <CheckCircle className="w-3 h-3" /> State Attested
           </span>
         </div>

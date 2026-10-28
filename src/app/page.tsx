@@ -113,6 +113,35 @@ export default function Home() {
 
     try {
       setIsConnecting(true);
+
+      // Auto switch or add Portaldot V3
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: PORTALDOT_CHAIN_SPECS.hexChainId }],
+        });
+      } catch (switchError: unknown) {
+        const err = switchError as { code?: number };
+        if (err && err.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: PORTALDOT_CHAIN_SPECS.hexChainId,
+                chainName: PORTALDOT_CHAIN_SPECS.networkName,
+                nativeCurrency: {
+                  name: 'Portaldot Token',
+                  symbol: 'tPOT',
+                  decimals: 18,
+                },
+                rpcUrls: [PORTALDOT_CHAIN_SPECS.evmRpcUrl],
+                blockExplorerUrls: ['https://scanner-testnet-v3.portaldot.dev/'],
+              },
+            ],
+          });
+        }
+      }
+
       const client = createWalletClient({
         chain: portaldotV3,
         transport: custom(window.ethereum),
@@ -144,7 +173,7 @@ export default function Home() {
     addLog('RESOLVER', 'Wallet disconnected');
   };
 
-  // Add Portaldot V3 to MetaMask via EIP-3085
+  // Add / Switch Portaldot V3 in MetaMask via EIP-3085
   const handleAddToMetaMask = async () => {
     if (typeof window === 'undefined' || !window.ethereum) {
       alert('MetaMask not detected in browser.');
@@ -152,26 +181,39 @@ export default function Home() {
     }
 
     try {
-      await window.ethereum.request({
-        method: 'wallet_addEthereumChain',
-        params: [
-          {
-            chainId: PORTALDOT_CHAIN_SPECS.hexChainId,
-            chainName: PORTALDOT_CHAIN_SPECS.networkName,
-            nativeCurrency: {
-              name: 'Portaldot Token',
-              symbol: PORTALDOT_CHAIN_SPECS.tokenSymbol,
-              decimals: 18, // Standard EVM representation
-            },
-            rpcUrls: [PORTALDOT_CHAIN_SPECS.evmRpcUrl],
-            blockExplorerUrls: [PORTALDOT_CHAIN_SPECS.nodeConsoleUrl],
-          },
-        ],
-      });
-      addLog('RPC', 'Dispatched wallet_addEthereumChain for Portaldot V3 (Chain ID 420420777)');
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: PORTALDOT_CHAIN_SPECS.hexChainId }],
+        });
+        addLog('RPC', 'Switched MetaMask network to Portaldot V3 Testnet (Chain ID 420420777)');
+      } catch (switchError: unknown) {
+        const err = switchError as { code?: number };
+        if (err && err.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: PORTALDOT_CHAIN_SPECS.hexChainId,
+                chainName: PORTALDOT_CHAIN_SPECS.networkName,
+                nativeCurrency: {
+                  name: 'Portaldot Token',
+                  symbol: 'tPOT',
+                  decimals: 18,
+                },
+                rpcUrls: [PORTALDOT_CHAIN_SPECS.evmRpcUrl],
+                blockExplorerUrls: ['https://scanner-testnet-v3.portaldot.dev/'],
+              },
+            ],
+          });
+          addLog('RPC', 'Registered Portaldot V3 Testnet in MetaMask (Chain ID 420420777)');
+        } else {
+          throw switchError;
+        }
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      addLog('RPC', `wallet_addEthereumChain error: ${msg}`);
+      addLog('RPC', `MetaMask network error: ${msg}`);
     }
   };
 
