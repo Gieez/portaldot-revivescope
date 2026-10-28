@@ -9,12 +9,13 @@ import { ContractHarness } from '@/components/ContractHarness';
 import { TelemetryFeed, LogEntry } from '@/components/TelemetryFeed';
 import { probeRpcEndpoint, getSimulatedProbeResult, RpcProbeResult } from '@/lib/rpc-sentinel';
 import { PORTALDOT_CHAIN_SPECS, portaldotV3 } from '@/lib/chains';
-import { createWalletClient, custom } from 'viem';
+import { createWalletClient, createPublicClient, custom, http, formatEther } from 'viem';
 
 export default function Home() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const [isSimulatedMode, setIsSimulatedMode] = useState<boolean>(true); // Resilient default for judging
+  const [isSimulatedMode, setIsSimulatedMode] = useState<boolean>(false); // Default to LIVE now that user has tPOT!
   const [probeResult, setProbeResult] = useState<RpcProbeResult | null>(null);
   const [isProbing, setIsProbing] = useState<boolean>(false);
 
@@ -45,6 +46,30 @@ export default function Home() {
     },
     []
   );
+
+  const fetchBalance = useCallback(async () => {
+    if (!walletAddress) {
+      setWalletBalance(null);
+      return;
+    }
+    try {
+      const publicClient = createPublicClient({
+        chain: portaldotV3,
+        transport: http(PORTALDOT_CHAIN_SPECS.evmRpcUrl),
+      });
+      const bal = await publicClient.getBalance({ address: walletAddress as `0x${string}` });
+      const potUnits = Number(formatEther(bal)).toFixed(2);
+      setWalletBalance(potUnits);
+    } catch (e) {
+      console.error('Failed to fetch balance:', e);
+    }
+  }, [walletAddress]);
+
+  useEffect(() => {
+    fetchBalance();
+    const interval = setInterval(fetchBalance, 10000);
+    return () => clearInterval(interval);
+  }, [fetchBalance]);
 
   const runProbe = useCallback(async () => {
     setIsProbing(true);
@@ -96,6 +121,15 @@ export default function Home() {
       const [account] = await client.requestAddresses();
       setWalletAddress(account);
       addLog('RESOLVER', `Connected Web3 wallet: ${account}`);
+
+      // Query balance immediately
+      const publicClient = createPublicClient({
+        chain: portaldotV3,
+        transport: http(PORTALDOT_CHAIN_SPECS.evmRpcUrl),
+      });
+      const bal = await publicClient.getBalance({ address: account });
+      setWalletBalance(Number(formatEther(bal)).toFixed(2));
+      addLog('RESOLVER', `Wallet tPOT balance confirmed: ${formatEther(bal)} tPOT`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       addLog('RPC', `Wallet connection failed: ${msg}`);
@@ -106,6 +140,7 @@ export default function Home() {
 
   const handleDisconnectWallet = () => {
     setWalletAddress(null);
+    setWalletBalance(null);
     addLog('RESOLVER', 'Wallet disconnected');
   };
 
@@ -126,7 +161,7 @@ export default function Home() {
             nativeCurrency: {
               name: 'Portaldot Token',
               symbol: PORTALDOT_CHAIN_SPECS.tokenSymbol,
-              decimals: PORTALDOT_CHAIN_SPECS.decimals,
+              decimals: 18, // Standard EVM representation
             },
             rpcUrls: [PORTALDOT_CHAIN_SPECS.evmRpcUrl],
             blockExplorerUrls: [PORTALDOT_CHAIN_SPECS.nodeConsoleUrl],
@@ -142,59 +177,72 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-canvas text-zinc-100 flex flex-col font-sans selection:bg-accent-blue/30 selection:text-white">
-      <Header
-        walletAddress={walletAddress}
-        isConnecting={isConnecting}
-        onConnectWallet={handleConnectWallet}
-        onDisconnectWallet={handleDisconnectWallet}
-        isSimulatedMode={isSimulatedMode}
-        onToggleMode={(sim) => {
-          setIsSimulatedMode(sim);
-          addLog('RPC', `Toggled diagnostic mode: ${sim ? 'SIMULATOR REPLICA' : 'LIVE NETWORK RPC'}`);
-        }}
-        rpcLatency={probeResult?.latencyMs ?? 0}
-        rpcStatus={probeResult?.statusText ?? 'INITIALIZING'}
-      />
+      {/* Background visual atmosphere */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-canvas to-transparent blur-2xl" />
+      </div>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex flex-col gap-6">
-        {/* Top Node Sentinel Telemetry Banner */}
-        <NodeSentinel
-          probeResult={probeResult}
-          isLoading={isProbing}
-          onRefreshProbe={runProbe}
-          onAddToMetaMask={handleAddToMetaMask}
-          isSimulated={isSimulatedMode}
-        />
-
-        {/* Dual Core Workbenches: Address Resolver & Safe Decimal Calculator */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AddressMapper
-            connectedWalletAddress={walletAddress}
-            onLogEvent={addLog}
-          />
-          <DecimalCalculator onLogEvent={addLog} />
-        </div>
-
-        {/* On-Chain ReviveProbe Sandbox */}
-        <ContractHarness
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header
           walletAddress={walletAddress}
-          isSimulated={isSimulatedMode}
-          onLogEvent={addLog}
+          walletBalance={walletBalance}
+          isConnecting={isConnecting}
+          onConnectWallet={handleConnectWallet}
+          onDisconnectWallet={handleDisconnectWallet}
+          isSimulatedMode={isSimulatedMode}
+          onToggleMode={(sim) => {
+            setIsSimulatedMode(sim);
+            addLog('RPC', `Toggled diagnostic mode: ${sim ? 'SIMULATOR REPLICA' : 'LIVE NETWORK RPC'}`);
+          }}
+          rpcLatency={probeResult?.latencyMs ?? 0}
+          rpcStatus={probeResult?.statusText ?? 'INITIALIZING'}
         />
 
-        {/* Live Telemetry Log Feed */}
-        <TelemetryFeed logs={logs} onClearLogs={() => setLogs([])} />
-      </main>
+        <main className="flex-1 max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex flex-col gap-6">
+          {/* Top Node Sentinel Telemetry Banner */}
+          <NodeSentinel
+            probeResult={probeResult}
+            isLoading={isProbing}
+            onRefreshProbe={runProbe}
+            onAddToMetaMask={handleAddToMetaMask}
+            isSimulated={isSimulatedMode}
+            walletBalance={walletBalance}
+          />
 
-      {/* Footer */}
-      <footer className="border-t border-panel-border bg-panel/40 py-4 px-4 lg:px-8 text-center text-xs font-mono text-zinc-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>ReviveScope • Engineered for Portaldot Hacker House 2026 (DoraHacks)</span>
-          <span className="text-zinc-400">
-            Stack: Next.js App Router • Viem • Solidity 0.8.20 • Substrate pallet-revive
-          </span>
-        </div>
-      </footer>
+          {/* Dual Core Workbenches: Address Resolver & Safe Decimal Calculator */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AddressMapper
+              connectedWalletAddress={walletAddress}
+              onLogEvent={addLog}
+            />
+            <DecimalCalculator onLogEvent={addLog} />
+          </div>
+
+          {/* On-Chain ReviveProbe Sandbox */}
+          <ContractHarness
+            walletAddress={walletAddress}
+            isSimulated={isSimulatedMode}
+            onLogEvent={addLog}
+            onRefreshBalance={fetchBalance}
+          />
+
+          {/* Live Telemetry Log Feed */}
+          <TelemetryFeed logs={logs} onClearLogs={() => setLogs([])} />
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-panel-border/80 bg-panel/30 py-5 px-4 lg:px-8 text-center text-xs font-mono text-zinc-400">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-zinc-300">ReviveScope</span>
+              <span>• Engineered for Portaldot Hacker House 2026 (DoraHacks)</span>
+            </div>
+            <span className="text-zinc-400">
+              Stack: Next.js 14 App Router • Viem • Solidity 0.8.20 • Substrate pallet-revive
+            </span>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
