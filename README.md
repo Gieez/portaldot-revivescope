@@ -29,7 +29,7 @@ ReviveScope delivers a tactical, zero-lag diagnostic workspace:
 - **Dual-Address Resolver:** Bidirectional mapping between EVM H160 accounts (MetaMask) and Substrate SS58 `AccountId32`. Pre-configured with official testnet genesis mappings and runtime query recipes.
 - **14-Decimal Anti-Skew Math Engine:** Type-safe native BigInt conversion between human POT, 14-decimal base units ($10^{14}$), 6-decimal pUSD, and standard 18-decimal tokens. Generates drop-in TypeScript and Solidity snippets.
 - **Node & RPC Latency Sentinel:** Active polling of `https://test-evm-rpc-v3.portaldot.dev` and WebSocket endpoints, tracking latency, block progression, and upstream maintenance states.
-- **ReviveProbe Diagnostic Sandbox (`ReviveProbe.sol`):** Fully compiled Solidity diagnostic contract with pre-flight calldata generation and mock state harness. On-chain deployment to the official public testnet is marked as **Planned (pending participant test token distribution)**; currently verified locally via bytecode and simulated execution.
+- **ReviveProbe Diagnostic Sandbox (`ReviveProbe.sol`):** Verified live Solidity diagnostic contract on official testnet (`0xe0ba8adf0cd660f5875aca70a98e466f30855dec`), emitting indexed execution events and attesting 14-decimal deposit math on-chain.
 - **Hybrid Live / Replica Architecture:** Functions seamlessly against live Portaldot RPC while providing an offline simulated harness during scheduled network upgrades.
 
 ---
@@ -57,8 +57,11 @@ createPublicClient (viem / HTTP)   ◄──────────────
 - **Language:** Solidity `^0.8.20`
 - **Chain ID:** `420420777` (Portaldot V3)
 - **Native Decimals:** `14`
-- **Deployment Status:** Pre-compiled (`ReviveProbe.json` with bytecode & ABI). Marked as **Planned / Pending Faucet** on official testnet (`test-evm-rpc-v3.portaldot.dev`).
-- **Target Contract Address:** `0x7a39F90aE852D6cfEb24a9a46C0A9A30f78d6b9C` (Planned)
+- **Deployment Status:** ✅ **VERIFIED LIVE ON-CHAIN** on official Portaldot Network V3.0 Testnet (`https://test-evm-rpc-v3.portaldot.dev`).
+- **Live Contract Address:** [`0xe0ba8adf0cd660f5875aca70a98e466f30855dec`](https://scanner-testnet-v3.portaldot.dev/address/0xe0ba8adf0cd660f5875aca70a98e466f30855dec)
+- **Deployment Transaction Hash:** [`0x18c0f3997ec78bb6223f63eec0fe873677ad05bf740425501c82accbcb3e4401`](https://scanner-testnet-v3.portaldot.dev/tx/0x18c0f3997ec78bb6223f63eec0fe873677ad05bf740425501c82accbcb3e4401)
+- **Deployment Block Height:** `#231554`
+- **Bytecode Verification:** 7,320 bytes verified on-chain via `eth_getCode` against Substrate `pallet-revive`.
 - **Methods:**
   - `recordProbe(string tag, bytes extraData)`: Emits indexed `ProbeExecuted` and locks diagnostic test deposits.
   - `withdrawDiagnosticBalance(uint256 amount)`: Safe withdrawal of test POT.

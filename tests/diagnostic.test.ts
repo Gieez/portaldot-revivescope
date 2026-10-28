@@ -32,10 +32,10 @@ test('Address Mapper: H160 validation and SS58 derivation', () => {
     'Must match official pallet-revive derived SS58 mapping'
   );
 
-  // 2. Probe contract
+  // 2. Probe contract (Live Deployed Instance)
   assert.equal(
-    deriveSubstrateAddress('0x7a39F90aE852D6cfEb24a9a46C0A9A30f78d6b9C'),
-    '5EpxvMDeCPJrSqZTnjSE3Ktme7w4bPAmyQf7c6AxMmDkZEn7',
+    deriveSubstrateAddress('0xe0ba8adf0cd660f5875aca70a98e466f30855dec'),
+    '5H9MzqbdMevBCotKHfb68oSj6um8XZ7Rzs3bDHgts8Vd1R18',
     'Must match pallet-revive calculated SS58 address'
   );
 

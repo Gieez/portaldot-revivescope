@@ -44,7 +44,7 @@ export function isValidH160(address: string): boolean {
  */
 export const VERIFIED_REGISTRY_MAPPINGS: Record<string, string> = {
   '0xf7ec65d11e35375a250e474059a917b537804142': '5Hfmuhj1AHrTBJiC9zUPnJo1cfG2G52LLMwofSigBnjtto8Y',
-  '0x7a39f90ae852d6cfeb24a9a46c0a9a30f78d6b9c': '5EpxvMDeCPJrSqZTnjSE3Ktme7w4bPAmyQf7c6AxMmDkZEn7',
+  '0xe0ba8adf0cd660f5875aca70a98e466f30855dec': '5H9MzqbdMevBCotKHfb68oSj6um8XZ7Rzs3bDHgts8Vd1R18',
   '0x0000000000000000000000000000000000000001': '5C4hrfjw9DjXZTzV3MwzrrAr9P1MMqQDFcr5ZiJ7JxD76SLX',
 };
 
